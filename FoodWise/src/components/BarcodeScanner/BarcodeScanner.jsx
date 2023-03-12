@@ -9,9 +9,10 @@ class BarcodeScanner extends Component {
       target: "#barcode-scanner",
     },
     decoder: {
-      readers: ["upc_reader", "ean_reader"],
+      readers: ["upc_reader"],
+      // readers: ["upc_reader", "upc_e_reader", "ean_reader", "ean_8_reader"],
     },
-    locate: true,
+    locate: true
   };
 
   componentDidMount() {
@@ -20,7 +21,7 @@ class BarcodeScanner extends Component {
         console.log(err);
         return;
       }
-
+      console.log("Initialization finished. Ready to start!");
       Quagga.start();
 
       Quagga.onDetected(this.onBarcodeDetected);
@@ -32,14 +33,14 @@ class BarcodeScanner extends Component {
   }
 
   onBarcodeDetected = (() => {
-    let lastLoggedTime = 0;
+    let loggedTime = 0;
   
     return (data) => {
       const now = Date.now();
   
-      if (now - lastLoggedTime > 3000) {
+      if (now - loggedTime > 2000) {
         console.log("Barcode detected:", data.codeResult.code);
-        lastLoggedTime = now;
+        loggedTime = now;
       }
     };
   })();  

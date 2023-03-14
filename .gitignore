@@ -1,5 +1,9 @@
-# Directories and Hidden Files
+# Directories
 /venv/
 /.idea/
+/backend/dev.db
+/backend/.env
+
+# Hidden Files
 .DS_Store
 .gitignore

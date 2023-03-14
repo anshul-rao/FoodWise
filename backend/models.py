@@ -6,7 +6,7 @@ class FoodInventory(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(), nullable=False)  # String preset 50
     quantity = db.Column(db.Integer(), nullable=False)
-    expiry_date = db.Column(db.Date(), nullable=False)
+    expiry_date = db.Column(db.String(), nullable=False)
     # user_id = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
@@ -14,9 +14,41 @@ class FoodInventory(db.Model):
 
     # Setter Methods
 
+    def save(self):
+        """
+        The save function is used to save the changes made to a model instance.
+        It takes in no arguments and returns nothing.
+        :param self: Refer to the current instance of the class
+        :return: The object that was just saved
+        """
+        db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        """
+        The delete function is used to delete a specific row in the database. It takes no parameters and returns nothing.
+        :param self: Refer to the current instance of the class, and is used to access variables that belongs to the class
+        :return: Nothing
+        """
+        db.session.delete(self)
+        db.session.commit()
+
+    def update(self, name, quantity, expiry_date):
+        """
+        The update function updates the title and description of a given blog post.
+        It takes two parameters, title and description.
+        :param self: Access variables that belongs to the class
+        :param title: Update the title of the post
+        :param description: Update the description of the blog post
+        :return: A dictionary with the updated values of title and description
+        """
+        self.name = name
+        self.quantity = quantity
+        self.expiry_date = expiry_date
+
+        db.session.commit()
+
     def addItem(self, name, quantity, expiry_date=None):
-        if expiry_date:
-            expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d')
         item = FoodInventory(name=name, quantity=quantity,
                              expiryDate=expiry_date)
         db.session.add(item)

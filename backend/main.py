@@ -1,9 +1,16 @@
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
 from config import DevConfig
-from models import FoodInventory
+from models import FoodInventory, User
 from exts import db
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required
+
+# Decorator Meanings
+# marshal_with(): Takes data obj and applies field filtering.
+    # Takes in a data obj and displays it in an simpler format such as JSON
+# expect(): Defines an expected input format for the request
 
 app = Flask(__name__)
 app.config.from_object(DevConfig)
@@ -11,6 +18,7 @@ app.config.from_object(DevConfig)
 db.init_app(app)
 
 migrate = Migrate(app, db)
+JWTManager(app)
 
 api = Api(app, doc='/docs')
 
@@ -23,11 +31,64 @@ foodinvModel = api.model("Food Inventory", {
 }
 )
 
+registerModel = api.model("Register", {
+    "username": fields.String(),
+    "email": fields.String(),
+    "password": fields.String()
+})
+
+loginModel = api.model("Login", {
+    "username": fields.String(),
+    "password": fields.String()
+})
+
 
 @api.route('/hello')
 class HelloResource(Resource):
     def get(self):
         return {"message": "Hello World!"}
+    
+@api.route('/register')
+class Register(Resource):
+    @api.expect(registerModel)
+    def post(self):
+        data = request.get_json()
+
+        username = data.get('username')
+
+        dbUser = User.query.filter_by(username=username).first()
+        if dbUser is not None:
+            return jsonify({"message":f"User with username {username} already exists."})
+        
+        newUser = User(
+            username = data.get('username'),
+            email = data.get('email'),
+            password = generate_password_hash(data.get('password'))
+        )
+
+        newUser.save()
+
+        return jsonify({"message": "User created successfully!"})
+
+@api.route('/login')
+class Login(Resource):
+    @api.expect(loginModel)
+    def post(self):
+        data = request.get_json()
+
+        username = data.get('username')
+        password = data.get('password')
+
+        dbUser = User.query.filter_by(username=username).first()
+
+        if dbUser and check_password_hash(dbUser.password, password):
+            accessToken = create_access_token(identity=dbUser.username)
+            refreshToken = create_refresh_token(identity=dbUser.username)
+
+            return jsonify({
+                "accessToken": accessToken, "refreshToken": refreshToken
+                })
+        pass
 
 
 @api.route('/inventory')
@@ -39,6 +100,7 @@ class FoodInventoryList(Resource):
 
     @api.expect(foodinvModel)
     @api.marshal_with(foodinvModel, code=201)
+    @jwt_required()
     def post(self):
         """Add a new FoodInventory object to database"""
         data = request.get_json()
@@ -75,6 +137,7 @@ class FoodInventoryItem(Resource):
 
     @api.expect(foodinvModel)
     @api.marshal_with(foodinvModel)
+    @jwt_required()
     def put(self, item_id):
         """Updates a specific FoodInventory object by ID"""
         itemToUpdate = FoodInventory.query.get_or_404(
@@ -90,6 +153,7 @@ class FoodInventoryItem(Resource):
         return itemToUpdate
 
     @api.marshal_with(foodinvModel)
+    @jwt_required()
     def delete(self, item_id):
         """Deletes a specific FoodInventory object by ID"""
         itemToDelete = FoodInventory.query.get_or_404(

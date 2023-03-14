@@ -99,10 +99,14 @@ class FoodInventory(db.Model):
 
 # User Model
 class User(db.Model):
-    id=db.Column(db.Integer, primary_key=True)
+    id=db.Column(db.Integer(), primary_key=True) #unique=True ?
     username=db.Column(db.String(), nullable=False, unique=True)
     email=db.Column(db.String(), nullable=False, unique=True)
     password=db.Column(db.Text(), nullable=False)
 
     def __repr__(self):
         return f"<User {self.username}"
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()

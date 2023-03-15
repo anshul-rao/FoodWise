@@ -3,7 +3,8 @@
 /.idea/
 /backend/dev.db
 /backend/.env
-/backend/__pycache__/
+/backend/__pycache__
+/backend/instance
 
 # Hidden Files
 .DS_Store

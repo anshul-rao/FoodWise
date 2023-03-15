@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_restx import Resource, Namespace, fields
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,12 +6,14 @@ from models import User
 
 authNS = Namespace('auth', description="A namespace for authentication")
 
+# Register Model Serializer
 registerModel = authNS.model("Register", {
     "username": fields.String(),
     "email": fields.String(),
     "password": fields.String()
 })
 
+# Login Model Serializer
 loginModel = authNS.model("Login", {
     "username": fields.String(),
     "password": fields.String()
@@ -37,7 +39,7 @@ class Register(Resource):
 
         newUser.save()
 
-        return jsonify({"message": "User created successfully!"})
+        return make_response(jsonify({"message": "User created successfully!"}), 201) # Generates a JSON message along with a status code for unit testing
 
 @authNS.route('/login')
 class Login(Resource):
@@ -54,6 +56,6 @@ class Login(Resource):
             accessToken = create_access_token(identity=dbUser.username)
             refreshToken = create_refresh_token(identity=dbUser.username)
 
-            return jsonify({
+            return make_response(jsonify({
                 "accessToken": accessToken, "refreshToken": refreshToken
-                })
+                }), 200)
